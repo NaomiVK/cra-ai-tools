@@ -47,9 +47,18 @@ Thumbs.db
 
 __screenshots__/
 
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/.terraform.lock.hcl
+terraform/*.zip
+terraform/*.tfvars
+
 # Sensitive / AI config
 .env
 *.csv
+*.pem
 .claude/
 .gemini/
 *.md
