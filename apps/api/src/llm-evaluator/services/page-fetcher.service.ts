@@ -1,34 +1,28 @@
 import { Injectable } from '@nestjs/common';
+import { execFile } from 'child_process';
 
-const TIMEOUT_MS = 15_000;
+const TIMEOUT_S = 15;
 
 @Injectable()
 export class PageFetcherService {
-  async fetch(url: string): Promise<string> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
-    try {
-      const response = await fetch(url, {
-        signal: controller.signal,
-        headers: {
-          'User-Agent': 'CRA-AI-Tools/1.0',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  fetch(url: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      execFile(
+        'curl',
+        ['-s', '-L', '-m', String(TIMEOUT_S), '-f', url],
+        { maxBuffer: 10 * 1024 * 1024 },
+        (error, stdout) => {
+          if (error) {
+            reject(new Error(`Failed to fetch ${url}: ${error.message}`));
+            return;
+          }
+          if (!stdout || stdout.length === 0) {
+            reject(new Error(`Empty response from ${url}`));
+            return;
+          }
+          resolve(stdout);
         },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.includes('html') && !contentType.includes('xml') && !contentType.includes('text/plain')) {
-        throw new Error(`Unexpected content type: ${contentType}`);
-      }
-
-      return await response.text();
-    } finally {
-      clearTimeout(timeoutId);
-    }
+      );
+    });
   }
 }
