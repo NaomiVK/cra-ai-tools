@@ -1,0 +1,231 @@
+<h2>SimiTrack</h2>
+<p class="text-muted mb-4">
+  Analyze content similarity across URLs to detect duplicates, intent collisions, and keyword cannibalization.
+</p>
+
+<!-- Input -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="mb-3">
+      <label for="urlInput" class="form-label">URLs to compare (one per line)</label>
+      <textarea
+        class="form-control"
+        id="urlInput"
+        rows="6"
+        placeholder="https://www.canada.ca/en/page-one.html&#10;https://www.canada.ca/en/page-two.html&#10;https://www.canada.ca/en/page-three.html"
+        [ngModel]="urlInput()"
+        (ngModelChange)="urlInput.set($event)"
+        [disabled]="loading()"
+      ></textarea>
+      <small class="form-text text-muted">
+        Enter 2–50 public URLs. Content is extracted via Gemini and compared using OpenAI embeddings.
+      </small>
+    </div>
+    <div class="d-flex gap-2">
+      <button
+        class="btn btn-primary"
+        (click)="analyze()"
+        [disabled]="loading() || !urlInput().trim()"
+      >
+        @if (loading()) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+          Analyzing...
+        } @else {
+          <span class="material-icons" style="font-size: 1.2rem; vertical-align: middle;">compare_arrows</span>
+          Analyze URLs
+        }
+      </button>
+      <button class="btn btn-outline-secondary" (click)="loadExample()" [disabled]="loading()">
+        Load Example
+      </button>
+      <button class="btn btn-outline-secondary" (click)="clear()" [disabled]="loading()">
+        Clear
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Error -->
+@if (error()) {
+  <div class="alert alert-danger d-flex align-items-center" role="alert">
+    <span class="material-icons me-2">error_outline</span>
+    {{ error() }}
+  </div>
+}
+
+<!-- Loading -->
+@if (loading()) {
+  <div class="text-center py-5">
+    <p-progressSpinner strokeWidth="4" animationDuration="1s" />
+    <p class="text-muted mt-3">
+      Fetching page content via Gemini, generating embeddings, and calculating similarity...
+      This may take 30–90 seconds depending on the number of URLs.
+    </p>
+  </div>
+}
+
+<!-- Results -->
+@if (result(); as res) {
+  <!-- Summary Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-lg">
+      <div class="card text-center h-100">
+        <div class="card-body py-3">
+          <div class="fs-2 fw-bold text-primary">{{ res.pages_analyzed }}</div>
+          <small class="text-muted">Pages Analyzed</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg">
+      <div class="card text-center h-100">
+        <div class="card-body py-3">
+          <div class="fs-2 fw-bold text-danger">{{ duplicates().length }}</div>
+          <small class="text-muted">Duplicates</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg">
+      <div class="card text-center h-100">
+        <div class="card-body py-3">
+          <div class="fs-2 fw-bold text-info">{{ collisions().length }}</div>
+          <small class="text-muted">Intent Collisions</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg">
+      <div class="card text-center h-100">
+        <div class="card-body py-3">
+          <div class="fs-2 fw-bold text-warning">{{ cannibalization().length }}</div>
+          <small class="text-muted">Cannibalization</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg">
+      <div class="card text-center h-100">
+        <div class="card-body py-3">
+          <div class="fs-2 fw-bold text-secondary">{{ templateOverlaps().length }}</div>
+          <small class="text-muted">Template Overlaps</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (res.pages_failed > 0) {
+    <div class="alert alert-warning mb-4">
+      <strong>{{ res.pages_failed }} URL(s) failed</strong> to fetch:
+      {{ res.failed_urls?.join(', ') }}
+    </div>
+  }
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <button
+        class="nav-link"
+        [class.active]="activeTab() === 'relationships'"
+        (click)="activeTab.set('relationships')"
+      >
+        Relationships ({{ relationships().length }})
+      </button>
+    </li>
+    <li class="nav-item">
+      <button
+        class="nav-link"
+        [class.active]="activeTab() === 'clusters'"
+        (click)="activeTab.set('clusters')"
+      >
+        Intent Clusters ({{ clusters().length }})
+      </button>
+    </li>
+  </ul>
+
+  <!-- Relationships Table -->
+  @if (activeTab() === 'relationships') {
+    @if (relationships().length === 0) {
+      <p class="text-muted text-center py-4">No relationships to display.</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>URL A</th>
+              <th>URL B</th>
+              <th>Classification</th>
+              <th>Confidence</th>
+              <th>Similarity Scores</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (rel of relationships(); track rel.url_a + rel.url_b) {
+              <tr>
+                <td [title]="rel.url_a">
+                  <a [href]="rel.url_a" target="_blank" rel="noopener">{{ truncateUrl(rel.url_a) }}</a>
+                </td>
+                <td [title]="rel.url_b">
+                  <a [href]="rel.url_b" target="_blank" rel="noopener">{{ truncateUrl(rel.url_b) }}</a>
+                </td>
+                <td>
+                  <p-tag
+                    [value]="rel.classification"
+                    [severity]="getTagSeverity(rel.classification)"
+                  />
+                </td>
+                <td>{{ rel.confidence }}%</td>
+                <td>
+                  <div class="similarity-grid">
+                    <span class="badge bg-light text-dark" title="Title similarity">T: {{ (rel.similarity_summary.title * 100).toFixed(0) }}%</span>
+                    <span class="badge bg-light text-dark" title="Intro similarity">I: {{ (rel.similarity_summary.intro * 100).toFixed(0) }}%</span>
+                    <span class="badge bg-light text-dark" title="Body similarity">B: {{ (rel.similarity_summary.body * 100).toFixed(0) }}%</span>
+                    <span class="badge bg-light text-dark" title="Full-page similarity">F: {{ (rel.similarity_summary.full * 100).toFixed(0) }}%</span>
+                  </div>
+                </td>
+                <td><small>{{ rel.recommended_action }}</small></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+
+  <!-- Intent Clusters -->
+  @if (activeTab() === 'clusters') {
+    @if (clusters().length === 0) {
+      <p class="text-muted text-center py-4">No intent collision clusters detected.</p>
+    } @else {
+      <div class="row g-3">
+        @for (cluster of clusters(); track cluster.primary_url) {
+          <div class="col-12">
+            <div class="card cluster-card">
+              <div class="card-body">
+                <h5 class="card-title">Cluster ({{ cluster.cluster_urls.length + 1 }} URLs)</h5>
+                <div class="mb-2">
+                  <strong>Primary:</strong>
+                  <a [href]="cluster.primary_url" target="_blank" rel="noopener">
+                    {{ truncateUrl(cluster.primary_url, 80) }}
+                  </a>
+                </div>
+                @for (url of cluster.cluster_urls; track url) {
+                  <div class="mb-1">
+                    <span class="text-muted">Related:</span>
+                    <a [href]="url" target="_blank" rel="noopener">{{ truncateUrl(url, 80) }}</a>
+                  </div>
+                }
+                <p class="text-muted mt-2 mb-0"><small>{{ cluster.reasoning }}</small></p>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+}
+
+<!-- Empty state -->
+@if (!loading() && !result() && !error()) {
+  <div class="text-muted text-center py-5">
+    <span class="material-icons" style="font-size: 3rem;">compare_arrows</span>
+    <p class="mt-2">Enter URLs above and click Analyze to compare content similarity.</p>
+  </div>
+}

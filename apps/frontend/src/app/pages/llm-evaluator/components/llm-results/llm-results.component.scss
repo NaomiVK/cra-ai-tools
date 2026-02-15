@@ -1,0 +1,27 @@
+.consensus-badge {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 5px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.consensus-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.score-bar-track {
+  height: 6px;
+  background-color: #e9ecef;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}

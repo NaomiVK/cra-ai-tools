@@ -1,0 +1,95 @@
+<h2>LLM Evaluator</h2>
+<p class="text-muted mb-4">
+  Evaluate how well your web content can be read, interpreted, and cited by AI models like Claude, ChatGPT, and Gemini.
+</p>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="mb-3">
+      <label for="urlInput" class="form-label">URL to evaluate</label>
+      <div class="input-group">
+        <input
+          type="url"
+          class="form-control"
+          id="urlInput"
+          placeholder="https://www.canada.ca/en.html"
+          [(ngModel)]="url"
+          (keydown.enter)="evaluate()"
+          [disabled]="loading()"
+        />
+        <button
+          class="btn btn-primary"
+          type="button"
+          (click)="evaluate()"
+          [disabled]="loading() || !url().trim()"
+        >
+          @if (loading()) {
+            <span class="spinner-border spinner-border-sm me-1"></span>
+            Analyzing...
+          } @else {
+            <span class="material-icons" style="font-size: 1.2rem; vertical-align: middle;">send</span>
+            Evaluate
+          }
+        </button>
+      </div>
+      <small class="form-text text-muted">
+        Enter any public URL to analyze its LLM readability and discoverability.
+      </small>
+    </div>
+
+    <div class="form-check">
+      <input
+        class="form-check-input"
+        type="checkbox"
+        id="includeLlmCheck"
+        [checked]="includeLlm()"
+        (change)="includeLlm.set(!includeLlm())"
+        [disabled]="loading()"
+      />
+      <label class="form-check-label" for="includeLlmCheck">
+        Include LLM Analysis
+      </label>
+      <small class="d-block text-muted">
+        Sends condensed page content to Claude, GPT, and Gemini for evaluation — adds ~30s.
+      </small>
+    </div>
+  </div>
+</div>
+
+<!-- Error -->
+@if (error()) {
+  <div class="alert alert-danger d-flex align-items-center" role="alert">
+    <span class="material-icons me-2">error_outline</span>
+    {{ error() }}
+  </div>
+}
+
+<!-- Loading -->
+@if (loading()) {
+  <div class="text-center py-5">
+    <p-progressSpinner
+      strokeWidth="4"
+      animationDuration="1s"
+    />
+    <p class="text-muted mt-3">
+      @if (includeLlm()) {
+        Fetching page, running heuristics, and querying 3 LLM models... This may take up to 60 seconds.
+      } @else {
+        Fetching page and running analysis... This may take a moment for large pages.
+      }
+    </p>
+  </div>
+}
+
+<!-- Results -->
+@if (result(); as res) {
+  <app-results [result]="res" />
+}
+
+<!-- Empty state -->
+@if (!loading() && !result() && !error()) {
+  <div class="text-muted text-center py-5">
+    <span class="material-icons" style="font-size: 3rem;">analytics</span>
+    <p class="mt-2">Enter a URL above and click Evaluate to analyze LLM readability.</p>
+  </div>
+}

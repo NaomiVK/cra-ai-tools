@@ -1,0 +1,10 @@
+.similarity-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem;
+  min-width: 120px;
+}
+
+.cluster-card {
+  border-left: 4px solid var(--bs-info);
+}

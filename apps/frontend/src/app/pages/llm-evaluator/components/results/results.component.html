@@ -1,0 +1,87 @@
+<!-- Overall Score -->
+<div class="card mb-4">
+  <div class="card-body text-center">
+    <div class="overall-score-ring mx-auto mb-3" [style.border-color]="overallColor()">
+      <span class="overall-score-value" [style.color]="overallColor()">
+        {{ overallScore() }}
+      </span>
+    </div>
+    <h4 class="mb-1">LLM Readability Score</h4>
+    <p class="text-muted mb-2">{{ overallLabel() }}</p>
+    <small class="text-muted">
+      Analyzed: {{ metadata().url || metadata().filename }}
+      &middot; {{ metadata().analysis_duration_ms }}ms
+      @if (metadata().llm_enabled) {
+        &middot; LLM: {{ metadata().llm_models_succeeded }}/3 models
+      }
+    </small>
+  </div>
+</div>
+
+<!-- Blended Score Info -->
+@if (scoreComposition() === 'blended') {
+  <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+    <span class="material-icons me-2">balance</span>
+    <div>
+      <strong>Blended Score:</strong> This overall score combines heuristic analysis (50%) and LLM consensus (50%)
+      from {{ metadata().llm_models_succeeded }} model(s).
+    </div>
+  </div>
+}
+
+<!-- LLM Model Results -->
+@if (hasLlmResults()) {
+  <h5 class="mb-3">LLM Model Evaluations</h5>
+  <div class="mb-4">
+    <app-llm-results [llmResults]="llmEvaluations()" />
+  </div>
+}
+
+<!-- Heuristic Category Cards -->
+<h5 class="mb-3">Category Breakdown</h5>
+<div class="row g-3 mb-4">
+  @for (cat of categories(); track cat.key) {
+    <div class="col-md-6 col-xl-4">
+      <app-score-card
+        [label]="cat.label"
+        [score]="cat.score"
+        [details]="cat.details"
+        [issues]="cat.issues"
+      />
+    </div>
+  }
+</div>
+
+<!-- Actionable Items -->
+@if (sortedItems().length) {
+  <h5 class="mb-3">Actionable Improvements</h5>
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th style="width: 90px;">Priority</th>
+            <th style="width: 140px;">Category</th>
+            <th>Issue</th>
+            <th>Recommendation</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of sortedItems(); track $index) {
+            <tr>
+              <td>
+                <p-tag
+                  [value]="item.priority"
+                  [severity]="prioritySeverity(item.priority)"
+                />
+              </td>
+              <td><small class="fw-semibold">{{ item.category }}</small></td>
+              <td><small>{{ item.issue }}</small></td>
+              <td><small>{{ item.recommendation }}</small></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}

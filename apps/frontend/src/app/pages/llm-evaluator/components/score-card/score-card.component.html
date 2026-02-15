@@ -1,0 +1,50 @@
+<div class="card h-100">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+      <h6 class="card-title mb-0">{{ label() }}</h6>
+      <div class="score-badge" [style.background-color]="scoreColor()">
+        {{ score() }}
+      </div>
+    </div>
+
+    <div class="score-bar mb-3">
+      <div
+        class="score-bar-fill"
+        [style.width.%]="score()"
+        [style.background-color]="scoreColor()"
+      ></div>
+    </div>
+
+    <span class="badge mb-3" [style.background-color]="scoreColor()">
+      {{ scoreLabel() }}
+    </span>
+
+    @if (details().length) {
+      <div class="mt-2">
+        <small class="text-muted fw-semibold">Findings</small>
+        <ul class="list-unstyled mt-1 mb-0 detail-list">
+          @for (detail of details(); track detail) {
+            <li>
+              <span class="material-icons text-success" style="font-size: 0.85rem;">check_circle</span>
+              <small>{{ detail }}</small>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    @if (issues().length) {
+      <div class="mt-2">
+        <small class="text-muted fw-semibold">Issues</small>
+        <ul class="list-unstyled mt-1 mb-0 detail-list">
+          @for (issue of issues(); track issue) {
+            <li>
+              <span class="material-icons text-danger" style="font-size: 0.85rem;">error</span>
+              <small>{{ issue }}</small>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </div>
+</div>
