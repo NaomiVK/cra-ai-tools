@@ -79,6 +79,7 @@ export class SimiTrackComponent {
       next: (response) => {
         if (response.success) {
           this.result.set(response.data);
+          this.scrollToResults();
         } else {
           this.error.set(response.error || 'Analysis failed');
         }
@@ -122,6 +123,12 @@ export class SimiTrackComponent {
       default:
         return 'success';
     }
+  }
+
+  private scrollToResults(): void {
+    setTimeout(() => {
+      document.getElementById('simitrack-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
 
   truncateUrl(url: string, maxLength = 60): string {

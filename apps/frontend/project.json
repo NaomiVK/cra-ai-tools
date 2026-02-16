@@ -62,6 +62,9 @@
       },
       "defaultConfiguration": "development"
     },
+    "typecheck": {
+      "command": "tsc -p apps/frontend/tsconfig.app.json --noEmit"
+    },
     "lint": {
       "executor": "@nx/eslint:lint"
     },

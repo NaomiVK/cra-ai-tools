@@ -1,2 +1,2 @@
-export * from './lib/evaluation.model';
-export * from './lib/content-similarity.model';
+export * from './lib/evaluation.model.js';
+export * from './lib/content-similarity.model.js';

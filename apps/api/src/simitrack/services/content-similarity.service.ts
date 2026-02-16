@@ -49,7 +49,7 @@ export class ContentSimilarityService {
 
     const prompt = `Extract the following from this URL: ${url}
 
-Return JSON with these fields:
+Return ONLY a JSON object (no markdown fencing, no extra text) with these fields:
 - title: The page's <title> tag content
 - h1: The main H1 heading
 - intro_text: First 2-3 paragraphs or introduction section (max 500 words)
@@ -59,16 +59,19 @@ Use Google Search to find and analyze this page's content.`;
 
     try {
       const response = await client.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
           tools: [{ googleSearch: {} }],
-          responseMimeType: 'application/json',
         },
       });
 
-      const text = response.text || '{}';
-      const parsed = JSON.parse(text);
+      const raw = (response.text || '').trim();
+      const cleaned = raw
+        .replace(/^```(?:json)?\s*/i, '')
+        .replace(/\s*```\s*$/, '')
+        .trim();
+      const parsed = JSON.parse(cleaned || '{}');
       return {
         url,
         title: parsed.title || '',
@@ -77,14 +80,14 @@ Use Google Search to find and analyze this page's content.`;
         body_text: parsed.body_text || '',
       };
     } catch (error) {
-      this.logger.error(`Failed to fetch ${url}: ${error.message}`);
+      this.logger.error(`Failed to fetch ${url}: ${(error as Error).message}`);
       return {
         url,
         title: '',
         h1: '',
         intro_text: '',
         body_text: '',
-        fetchError: error.message,
+        fetchError: (error as Error).message,
       };
     }
   }

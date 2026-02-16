@@ -34,7 +34,7 @@ export function condensePage(page: ParsedPage): string {
   const structuredParts: string[] = [];
   if (page.jsonLd.length > 0) {
     const types = page.jsonLd
-      .map((j: Record<string, unknown>) => (j as { '@type'?: string })['@type'] || 'unknown')
+      .map((j) => ((j as Record<string, unknown>)['@type'] as string) || 'unknown')
       .join(', ');
     structuredParts.push(`JSON-LD types: ${types}`);
   }

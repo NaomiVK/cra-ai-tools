@@ -93,8 +93,9 @@ export class LlmService {
         return null;
       }
 
-      const data = await response.json();
-      const content = data?.choices?.[0]?.message?.content;
+      const data = await response.json() as Record<string, unknown>;
+      const choices = data?.choices as Array<{ message?: { content?: string } }> | undefined;
+      const content = choices?.[0]?.message?.content;
       if (!content) {
         this.logger.warn(`OpenRouter ${model}: no content in response`);
         return null;

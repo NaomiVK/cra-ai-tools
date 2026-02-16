@@ -34,7 +34,7 @@ export class EmbeddingService {
       });
       return response.data[0].embedding;
     } catch (error) {
-      this.logger.error(`Embedding failed: ${error.message}`);
+      this.logger.error(`Embedding failed: ${(error as Error).message}`);
       return [];
     }
   }
@@ -53,7 +53,7 @@ export class EmbeddingService {
       });
       return response.data.map((d) => d.embedding);
     } catch (error) {
-      this.logger.error(`Batch embedding failed: ${error.message}`);
+      this.logger.error(`Batch embedding failed: ${(error as Error).message}`);
       return texts.map(() => []);
     }
   }

@@ -51,7 +51,7 @@ export class SimiTrackController {
       return { success: true, data: result };
     } catch (error) {
       throw new HttpException(
-        `Analysis failed: ${error.message}`,
+        `Analysis failed: ${(error as Error).message}`,
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
