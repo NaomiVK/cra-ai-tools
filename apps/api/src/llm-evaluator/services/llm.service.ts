@@ -9,7 +9,7 @@ const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const MODELS = {
   claude: 'anthropic/claude-4.5-sonnet',
   gpt: 'openai/gpt-5.1-chat',
-  gemini: 'google/gemini-2.5-flash',
+  gemini: 'google/gemini-3-flash-preview',
 } as const;
 
 type ModelKey = keyof typeof MODELS;

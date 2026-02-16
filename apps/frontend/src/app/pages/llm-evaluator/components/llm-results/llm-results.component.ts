@@ -24,7 +24,7 @@ export class LlmResultsComponent {
     return [
       { key: 'claude', label: 'Claude 4.5 Sonnet', evaluation: r.claude },
       { key: 'gpt', label: 'GPT-5.1 Chat', evaluation: r.gpt },
-      { key: 'gemini', label: 'Gemini 2.5 Flash', evaluation: r.gemini },
+      { key: 'gemini', label: 'Gemini 3 Flash', evaluation: r.gemini },
     ];
   });
 
