@@ -9,6 +9,12 @@ module.exports = {
       devtoolModuleFilenameTemplate: '[absolute-resource-path]',
     }),
   },
+  externals: [
+    /^@nestjs\//,
+    'cron',
+    'class-transformer',
+    'class-validator',
+  ],
   plugins: [
     new NxAppWebpackPlugin({
       target: 'node',
