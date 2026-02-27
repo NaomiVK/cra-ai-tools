@@ -1,0 +1,296 @@
+<h2>LLM Batch Evaluator</h2>
+<p class="text-muted mb-4">
+  Compare LLM responses with and without web search across Claude, GPT, and Gemini over time.
+</p>
+
+<!-- Status Card -->
+@if (status(); as s) {
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3 text-center">
+        <div class="col-6 col-md-3">
+          <div class="fs-4 fw-bold text-primary">{{ s.total_rows }}</div>
+          <small class="text-muted">Total Responses</small>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="fs-4 fw-bold">{{ s.questions_count }}</div>
+          <small class="text-muted">Questions</small>
+        </div>
+        <div class="col-6 col-md-3">
+          @if (s.last_run_at) {
+            <div class="fs-6 fw-bold">{{ s.last_run_at | date:'MMM d, h:mm a' }}</div>
+          } @else {
+            <div class="fs-6 fw-bold text-muted">Never</div>
+          }
+          <small class="text-muted">Last Run</small>
+        </div>
+        <div class="col-6 col-md-3">
+          @if (s.is_running) {
+            <div class="fs-6 fw-bold text-warning">
+              <span class="spinner-border spinner-border-sm me-1"></span>
+              Running...
+            </div>
+          } @else if (scheduleEnabled()) {
+            <div class="fs-6 fw-bold">{{ s.next_run_at | date:'MMM d, h:mm a' }}</div>
+          } @else {
+            <div class="fs-6 fw-bold text-muted">Disabled</div>
+          }
+          <small class="text-muted">Next Run</small>
+        </div>
+      </div>
+      <hr class="my-3">
+      <div class="d-flex align-items-center gap-3 flex-wrap">
+        <div class="form-check form-switch mb-0">
+          <input class="form-check-input" type="checkbox" id="scheduleToggle"
+            [checked]="scheduleEnabled()"
+            (change)="toggleSchedule()"
+            [disabled]="scheduleLoading()">
+          <label class="form-check-label" for="scheduleToggle">Daily Schedule</label>
+        </div>
+        @if (scheduleEnabled()) {
+          <div class="d-flex align-items-center gap-2">
+            <label for="scheduleHour" class="form-label mb-0 text-nowrap">Run at</label>
+            <select id="scheduleHour" class="form-select form-select-sm" style="width: auto"
+              [ngModel]="scheduleHour()"
+              (ngModelChange)="updateScheduleHour($event)"
+              [disabled]="scheduleLoading()">
+              @for (h of utcHours; track h) {
+                <option [ngValue]="h">{{ h }}:00 UTC</option>
+              }
+            </select>
+          </div>
+        }
+        @if (scheduleLoading()) {
+          <span class="spinner-border spinner-border-sm text-muted"></span>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Controls -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row g-2 align-items-end">
+      <div class="col-6 col-md-2">
+        <label for="filterModel" class="form-label form-label-sm">Model</label>
+        <select id="filterModel" class="form-select form-select-sm"
+          [ngModel]="filterModel()"
+          (ngModelChange)="filterModel.set($event); applyFilters()">
+          <option value="">All Models</option>
+          <option value="claude">Claude</option>
+          <option value="gpt">GPT</option>
+          <option value="gemini">Gemini</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label for="filterSearch" class="form-label form-label-sm">Search Mode</label>
+        <select id="filterSearch" class="form-select form-select-sm"
+          [ngModel]="filterSearch()"
+          (ngModelChange)="filterSearch.set($event); applyFilters()">
+          <option value="">All Modes</option>
+          <option value="true">Web Search</option>
+          <option value="false">General Knowledge</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label for="filterDateFrom" class="form-label form-label-sm">From</label>
+        <input id="filterDateFrom" type="date" class="form-control form-control-sm"
+          [ngModel]="filterDateFrom()"
+          (ngModelChange)="filterDateFrom.set($event); applyFilters()" />
+      </div>
+      <div class="col-6 col-md-2">
+        <label for="filterDateTo" class="form-label form-label-sm">To</label>
+        <input id="filterDateTo" type="date" class="form-control form-control-sm"
+          [ngModel]="filterDateTo()"
+          (ngModelChange)="filterDateTo.set($event); applyFilters()" />
+      </div>
+      <div class="col-12 col-md-4 d-flex gap-2">
+        <button class="btn btn-sm btn-outline-secondary" (click)="clearFilters()">
+          Clear Filters
+        </button>
+        <button class="btn btn-sm btn-outline-danger" (click)="clearResults()"
+          [disabled]="total() === 0 || status()?.is_running">
+          Clear Results
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="downloadCsv()"
+          [disabled]="total() === 0">
+          <span class="material-icons" style="font-size: 1rem; vertical-align: middle;">download</span>
+          CSV
+        </button>
+        @if (status()?.is_running) {
+          <button class="btn btn-sm btn-danger" (click)="stopRun()">
+            <span class="material-icons" style="font-size: 1rem; vertical-align: middle;">stop</span>
+            Stop
+          </button>
+        } @else {
+          <button class="btn btn-sm btn-primary" (click)="triggerRun()"
+            [disabled]="runLoading()">
+            @if (runLoading()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+              Starting...
+            } @else {
+              <span class="material-icons" style="font-size: 1rem; vertical-align: middle;">play_arrow</span>
+              Run Now
+            }
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Error -->
+@if (error()) {
+  <div class="alert alert-danger d-flex align-items-center" role="alert">
+    <span class="material-icons me-2">error_outline</span>
+    {{ error() }}
+  </div>
+}
+
+<!-- Results Table -->
+@if (loading()) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary"></div>
+    <p class="text-muted mt-2">Loading results...</p>
+  </div>
+} @else if (rows().length > 0) {
+  <div class="table-responsive">
+    <table class="table table-hover align-middle table-sm">
+      <thead class="table-light">
+        <tr>
+          <th>Date/Time</th>
+          <th>Question</th>
+          <th>Model</th>
+          <th>Mode</th>
+          <th>Search Used</th>
+          <th>Response</th>
+          <th>Tokens</th>
+          <th>Latency</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.timestamp + row.model_name + row.search_enabled) {
+          <tr [class.table-danger]="row.error">
+            <td class="text-nowrap">
+              <small>{{ row.timestamp | date:'MMM d, h:mm a' }}</small>
+            </td>
+            <td>
+              <small [title]="row.question_text">{{ truncate(row.question_text, 50) }}</small>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="getModelBadgeClass(row.model_name)">
+                {{ row.model_name }}
+              </span>
+            </td>
+            <td>
+              @if (row.search_enabled) {
+                <span class="badge bg-info">Web Search</span>
+              } @else {
+                <span class="badge bg-secondary">General</span>
+              }
+            </td>
+            <td>
+              @if (row.error) {
+                <span class="material-icons text-danger" style="font-size: 1rem;">error</span>
+              } @else if (row.search_actually_used) {
+                <span class="material-icons text-success" style="font-size: 1rem;">check_circle</span>
+              } @else {
+                <span class="material-icons text-muted" style="font-size: 1rem;">remove_circle_outline</span>
+              }
+            </td>
+            <td>
+              @if (row.error) {
+                <small class="text-danger" [title]="row.error">{{ truncate(row.error, 80) }}</small>
+              } @else {
+                <small [title]="row.response_text">{{ truncate(row.response_text) }}</small>
+              }
+            </td>
+            <td class="text-end"><small>{{ row.response_tokens }}</small></td>
+            <td class="text-end text-nowrap">
+              <small>{{ row.latency_ms | number }}ms</small>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  @if (totalPages() > 1) {
+    <nav class="d-flex justify-content-between align-items-center mt-3">
+      <small class="text-muted">
+        Showing {{ (currentPage() - 1) * pageSize + 1 }}–{{ Math.min(currentPage() * pageSize, filteredTotal()) }}
+        of {{ filteredTotal() }}
+      </small>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item" [class.disabled]="currentPage() === 1">
+          <button class="page-link" (click)="goToPage(currentPage() - 1)">Prev</button>
+        </li>
+        @for (p of [].constructor(totalPages()); track $index) {
+          <li class="page-item" [class.active]="currentPage() === $index + 1">
+            <button class="page-link" (click)="goToPage($index + 1)">{{ $index + 1 }}</button>
+          </li>
+        }
+        <li class="page-item" [class.disabled]="currentPage() === totalPages()">
+          <button class="page-link" (click)="goToPage(currentPage() + 1)">Next</button>
+        </li>
+      </ul>
+    </nav>
+  }
+} @else if (!loading() && !error()) {
+  <div class="text-muted text-center py-5">
+    <span class="material-icons" style="font-size: 3rem;">batch_prediction</span>
+    <p class="mt-2">No results yet. Click "Run Now" to start the first batch evaluation.</p>
+  </div>
+}
+
+<!-- Questions List -->
+<div class="card mt-4">
+  <button class="card-header d-flex justify-content-between align-items-center w-100 border-0 bg-transparent"
+    style="cursor: pointer" (click)="toggleQuestions()">
+    <span>
+      Configured Questions ({{ questions().length }})
+      @if (isCustomQuestions()) {
+        <span class="badge bg-warning text-dark ms-2">Custom</span>
+      }
+    </span>
+    <span class="material-icons">
+      {{ showQuestions() ? 'expand_less' : 'expand_more' }}
+    </span>
+  </button>
+  @if (showQuestions()) {
+    <!-- Upload Section -->
+    <div class="card-body border-bottom">
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <input type="file" accept=".csv" class="form-control form-control-sm"
+          style="max-width: 280px" (change)="onFileSelected($event)" />
+        <button class="btn btn-sm btn-outline-primary" (click)="uploadCsv()"
+          [disabled]="!selectedFile() || uploadLoading()">
+          @if (uploadLoading()) {
+            <span class="spinner-border spinner-border-sm me-1"></span>
+          }
+          Upload CSV
+        </button>
+        @if (isCustomQuestions()) {
+          <button class="btn btn-sm btn-outline-secondary" (click)="removeCustomQuestions()"
+            [disabled]="uploadLoading()">
+            Revert to Defaults
+          </button>
+        }
+      </div>
+      <small class="text-muted d-block mt-1">CSV format: <code>id,text</code> (id column optional, max 100 questions)</small>
+      @if (uploadError()) {
+        <div class="text-danger mt-1"><small>{{ uploadError() }}</small></div>
+      }
+    </div>
+
+    <div class="card-body p-0">
+      <ol class="list-group list-group-flush list-group-numbered">
+        @for (q of questions(); track q.id) {
+          <li class="list-group-item">{{ q.text }}</li>
+        }
+      </ol>
+    </div>
+  }
+</div>

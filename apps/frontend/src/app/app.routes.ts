@@ -22,6 +22,13 @@ export const appRoutes: Route[] = [
         (m) => m.SimiTrackComponent
       ),
   },
+  {
+    path: 'llm-batch',
+    loadComponent: () =>
+      import('./pages/llm-batch/llm-batch.component').then(
+        (m) => m.LlmBatchComponent
+      ),
+  },
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
   { path: '**', redirectTo: '/dashboard' },
 ];
