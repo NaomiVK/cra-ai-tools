@@ -96,9 +96,13 @@ export class LlmBatchController {
   }
 
   @Post('run')
-  async triggerRun(): Promise<{ success: boolean; message: string }> {
-    const result = await this.scheduler.runBatch();
-    return { success: result.started, message: result.message };
+  triggerRun(): { success: boolean; message: string } {
+    if (this.scheduler.running) {
+      return { success: false, message: 'Batch is already running' };
+    }
+    // Fire-and-forget — frontend polls status for progress
+    this.scheduler.runBatch();
+    return { success: true, message: 'Batch started' };
   }
 
   @Delete('results')
