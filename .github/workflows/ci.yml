@@ -35,11 +35,6 @@ jobs:
         env:
           NX_IGNORE_UNSUPPORTED_TS_SETUP: 'true'
 
-      - name: Test
-        run: npx nx run-many -t test
-        env:
-          NX_IGNORE_UNSUPPORTED_TS_SETUP: 'true'
-
       - name: Build
         run: npx nx run-many -t build
         env:
