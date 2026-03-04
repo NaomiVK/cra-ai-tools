@@ -11,7 +11,9 @@ import { ClaudeBatchService } from './claude-batch.service';
 import { OpenAiBatchService } from './openai-batch.service';
 import { GeminiBatchService } from './gemini-batch.service';
 import { appendToCsv, getCsvRowCount, loadCustomQuestions } from '../utils/csv.util';
-import type { BatchCallResult } from './claude-batch.service';
+
+
+import type { BatchCallResult } from './batch-call-result';
 
 const CSV_FILE = path.resolve(process.cwd(), 'data', 'batch-results.csv');
 const CUSTOM_QUESTIONS_FILE = path.resolve(process.cwd(), 'data', 'custom-questions.csv');
@@ -29,6 +31,7 @@ export class BatchSchedulerService {
   private isRunning = false;
   private abortRequested = false;
   private lastRunAt: string | null = null;
+  private rowCount: number | null = null;
 
   constructor(
     private readonly claudeService: ClaudeBatchService,
@@ -49,7 +52,10 @@ export class BatchSchedulerService {
   }
 
   get totalRows(): number {
-    return getCsvRowCount(CSV_FILE);
+    if (this.rowCount === null) {
+      this.rowCount = getCsvRowCount(CSV_FILE);
+    }
+    return this.rowCount;
   }
 
   get customQuestionsPath(): string {
@@ -95,6 +101,14 @@ export class BatchSchedulerService {
     return next.toISOString();
   }
 
+  clearData(): void {
+    if (fs.existsSync(CSV_FILE)) {
+      fs.unlinkSync(CSV_FILE);
+    }
+    this.lastRunAt = null;
+    this.rowCount = 0;
+  }
+
   stopBatch(): boolean {
     if (!this.isRunning) return false;
     this.abortRequested = true;
@@ -103,13 +117,13 @@ export class BatchSchedulerService {
   }
 
   @Cron('0 * * * *')
-  async handleDailyCron(): Promise<void> {
+  handleDailyCron(): void {
     const schedule = this.getSchedule();
     if (!schedule.enabled) return;
     const currentHour = new Date().getUTCHours();
     if (currentHour !== schedule.utc_hour) return;
     this.logger.log(`Scheduled cron triggered (UTC hour ${schedule.utc_hour}) — starting batch run`);
-    await this.runBatch();
+    this.runBatch();
   }
 
   async runBatch(): Promise<{ started: boolean; message: string }> {
@@ -117,9 +131,13 @@ export class BatchSchedulerService {
       return { started: false, message: 'Batch is already running' };
     }
 
+    const { questions: activeQuestions, isCustom } = this.getActiveQuestions();
+    if (activeQuestions.length === 0) {
+      return { started: false, message: 'No questions configured. Upload a questions CSV first.' };
+    }
+
     this.isRunning = true;
     this.abortRequested = false;
-    const { questions: activeQuestions, isCustom } = this.getActiveQuestions();
     this.logger.log(
       `Starting batch run: ${activeQuestions.length} questions × 3 models × 2 modes (${isCustom ? 'custom' : 'default'})`
     );
@@ -181,6 +199,7 @@ export class BatchSchedulerService {
             };
 
             appendToCsv(CSV_FILE, [row]);
+            this.rowCount = (this.rowCount ?? 0) + 1;
 
             if (completed < total) {
               await delay(DELAY_MS);
@@ -191,7 +210,7 @@ export class BatchSchedulerService {
 
       this.lastRunAt = new Date().toISOString();
       this.logger.log(
-        `Batch run complete: ${completed} calls, total CSV rows: ${this.totalRows}`
+        `Batch run complete: ${completed} calls, total CSV rows: ${this.rowCount}`
       );
       return { started: true, message: `Batch complete: ${completed} calls` };
     } catch (err) {

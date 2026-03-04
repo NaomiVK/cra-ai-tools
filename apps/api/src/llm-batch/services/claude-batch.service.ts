@@ -1,14 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Anthropic from '@anthropic-ai/sdk';
-
-export interface BatchCallResult {
-  response_text: string;
-  response_tokens: number;
-  latency_ms: number;
-  search_actually_used: boolean;
-  error: string;
-}
+import type { BatchCallResult } from './batch-call-result';
 
 @Injectable()
 export class ClaudeBatchService {
@@ -85,7 +78,6 @@ export class ClaudeBatchService {
       );
       const responseText = textBlocks.map((b) => b.text).join('\n');
 
-      // Detect if web search was actually used
       const searchUsed = response.content.some(
         (b) => b.type === 'server_tool_use' || b.type === 'web_search_tool_result'
       );

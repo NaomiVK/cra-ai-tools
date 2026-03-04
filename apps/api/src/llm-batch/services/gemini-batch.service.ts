@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenAI } from '@google/genai';
-import type { BatchCallResult } from './claude-batch.service';
+import type { BatchCallResult } from './batch-call-result';
 
 @Injectable()
 export class GeminiBatchService {
@@ -68,7 +68,6 @@ export class GeminiBatchService {
 
       const responseText = response.text ?? '';
 
-      // Detect if Google Search grounding was actually used
       const candidate = response.candidates?.[0];
       const searchUsed =
         !!candidate?.groundingMetadata?.groundingChunks?.length;

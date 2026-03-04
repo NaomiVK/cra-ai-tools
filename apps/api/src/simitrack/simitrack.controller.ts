@@ -6,6 +6,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ContentSimilarityService } from './services/content-similarity.service';
 import type {
   AnalyzeUrlsRequest,
@@ -16,7 +17,8 @@ import type {
 @Controller('simitrack')
 export class SimiTrackController {
   constructor(
-    private readonly contentSimilarityService: ContentSimilarityService
+    private readonly contentSimilarityService: ContentSimilarityService,
+    private readonly configService: ConfigService
   ) {}
 
   @Post('analyze')
@@ -37,10 +39,12 @@ export class SimiTrackController {
       );
     }
 
-    const validUrls = body.urls.filter((url) => url.startsWith('http'));
+    const validUrls = [
+      ...new Set(body.urls.filter((url) => url.startsWith('http'))),
+    ];
     if (validUrls.length < 2) {
       throw new HttpException(
-        'At least 2 valid URLs (starting with http) are required',
+        'At least 2 valid unique URLs (starting with http) are required',
         HttpStatus.BAD_REQUEST
       );
     }
@@ -58,14 +62,18 @@ export class SimiTrackController {
   }
 
   @Get('status')
-  async getStatus(): Promise<
-    SimiTrackApiResponse<{ ready: boolean; message: string }>
-  > {
+  getStatus(): SimiTrackApiResponse<{ ready: boolean; message: string }> {
+    const hasGemini = !!this.configService.get<string>('GEMINI_API_KEY');
+    const hasOpenAI = !!this.configService.get<string>('OPENAI_API_KEY');
+    const ready = hasGemini && hasOpenAI;
+
     return {
       success: true,
       data: {
-        ready: true,
-        message: 'SimiTrack content similarity service is ready',
+        ready,
+        message: ready
+          ? 'SimiTrack content similarity service is ready'
+          : `Missing API keys: ${[!hasGemini && 'GEMINI_API_KEY', !hasOpenAI && 'OPENAI_API_KEY'].filter(Boolean).join(', ')}`,
       },
     };
   }

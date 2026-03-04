@@ -25,8 +25,8 @@ export class LlmBatchService {
     if (query.question_id) params = params.set('question_id', query.question_id);
     if (query.date_from) params = params.set('date_from', query.date_from);
     if (query.date_to) params = params.set('date_to', query.date_to);
-    if (query.limit) params = params.set('limit', String(query.limit));
-    if (query.offset) params = params.set('offset', String(query.offset));
+    if (query.limit != null) params = params.set('limit', String(query.limit));
+    if (query.offset != null) params = params.set('offset', String(query.offset));
 
     return this.http.get<BatchResultsResponse>('/api/llm-batch/results', {
       params,

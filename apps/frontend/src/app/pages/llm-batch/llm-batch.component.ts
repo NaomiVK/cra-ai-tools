@@ -31,37 +31,31 @@ export class LlmBatchComponent implements OnInit, OnDestroy {
   private statusPollTimer: ReturnType<typeof setInterval> | null = null;
   readonly Math = Math;
 
-  // Status
   status = signal<BatchRunStatus | null>(null);
   questions = signal<BatchQuestion[]>([]);
   showQuestions = signal(false);
 
-  // Filters
   filterModel = signal<string>('');
   filterSearch = signal<string>('');
   filterDateFrom = signal('');
   filterDateTo = signal('');
 
-  // Results
   rows = signal<BatchResultRow[]>([]);
   total = signal(0);
   filteredTotal = signal(0);
   currentPage = signal(1);
   pageSize = 20;
 
-  // Schedule
   scheduleEnabled = signal(false);
   scheduleHour = signal(6);
   scheduleLoading = signal(false);
   utcHours = Array.from({ length: 24 }, (_, i) => i);
 
-  // Upload
   uploadLoading = signal(false);
   uploadError = signal<string | null>(null);
   isCustomQuestions = signal(false);
   selectedFile = signal<File | null>(null);
 
-  // State
   loading = signal(false);
   runLoading = signal(false);
   error = signal<string | null>(null);
@@ -195,19 +189,14 @@ export class LlmBatchComponent implements OnInit, OnDestroy {
 
   triggerRun(): void {
     this.runLoading.set(true);
-    this.startStatusPolling();
     this.batchService.triggerRun().subscribe({
       next: () => {
         this.runLoading.set(false);
-        this.stopStatusPolling();
-        this.loadStatus();
-        this.loadResults();
+        this.startStatusPolling();
       },
       error: (err) => {
         this.error.set(err?.error?.message || 'Failed to trigger run');
         this.runLoading.set(false);
-        this.stopStatusPolling();
-        this.loadStatus();
       },
     });
   }

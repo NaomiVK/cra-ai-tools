@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
-import type { BatchCallResult } from './claude-batch.service';
+import type { BatchCallResult } from './batch-call-result';
 
 @Injectable()
 export class OpenAiBatchService {
@@ -90,7 +90,6 @@ export class OpenAiBatchService {
         )
         .join('\n');
 
-      // Detect if web search was actually used
       const searchUsed = response.output.some(
         (item) => item.type === 'web_search_call'
       );

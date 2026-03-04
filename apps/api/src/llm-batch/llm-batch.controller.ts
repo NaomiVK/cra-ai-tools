@@ -100,17 +100,13 @@ export class LlmBatchController {
     if (this.scheduler.running) {
       return { success: false, message: 'Batch is already running' };
     }
-    // Fire-and-forget — frontend polls status for progress
     this.scheduler.runBatch();
     return { success: true, message: 'Batch started' };
   }
 
   @Delete('results')
   clearResults(): { success: boolean; message: string } {
-    const csvPath = this.scheduler.csvPath;
-    if (fs.existsSync(csvPath)) {
-      fs.unlinkSync(csvPath);
-    }
+    this.scheduler.clearData();
     return { success: true, message: 'Results cleared' };
   }
 

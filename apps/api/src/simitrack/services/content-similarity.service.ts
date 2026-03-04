@@ -120,37 +120,31 @@ Use Google Search to find and analyze this page's content.`;
   }
 
   async generateEmbeddings(pages: ContentPage[]): Promise<ContentPage[]> {
-    const pagesWithEmbeddings: ContentPage[] = [];
+    return Promise.all(
+      pages.map(async (page) => {
+        if (page.fetchError) return page;
 
-    for (const page of pages) {
-      if (page.fetchError) {
-        pagesWithEmbeddings.push(page);
-        continue;
-      }
+        const fullText = `${page.title} ${page.h1} ${page.intro_text} ${page.body_text}`;
+        this.logger.log(`Generating embeddings for: ${page.url}`);
 
-      const fullText = `${page.title} ${page.h1} ${page.intro_text} ${page.body_text}`;
+        const [titleEmb, introEmb, bodyEmb, fullEmb] = await Promise.all([
+          this.embeddingService.getEmbedding(page.title),
+          this.embeddingService.getEmbedding(page.intro_text),
+          this.embeddingService.getEmbedding(page.body_text),
+          this.embeddingService.getEmbedding(fullText),
+        ]);
 
-      this.logger.log(`Generating embeddings for: ${page.url}`);
-
-      const [titleEmb, introEmb, bodyEmb, fullEmb] = await Promise.all([
-        this.embeddingService.getEmbedding(page.title),
-        this.embeddingService.getEmbedding(page.intro_text),
-        this.embeddingService.getEmbedding(page.body_text.slice(0, 8000)),
-        this.embeddingService.getEmbedding(fullText.slice(0, 8000)),
-      ]);
-
-      pagesWithEmbeddings.push({
-        ...page,
-        embeddings: {
-          title: titleEmb,
-          intro: introEmb,
-          body: bodyEmb,
-          full: fullEmb,
-        },
-      });
-    }
-
-    return pagesWithEmbeddings;
+        return {
+          ...page,
+          embeddings: {
+            title: titleEmb,
+            intro: introEmb,
+            body: bodyEmb,
+            full: fullEmb,
+          },
+        };
+      })
+    );
   }
 
   calculateSimilarityMatrix(pages: ContentPage[]): SimilarityScore[] {
@@ -195,7 +189,6 @@ Use Google Search to find and analyze this page's content.`;
       let recommended_action: string;
       let reasoning: string;
 
-      // LOG-level so scores always appear in server output for tuning
       this.logger.log(
         `Similarity scores for ${score.url_a} vs ${score.url_b}: ` +
           `title=${(score.title_similarity * 100).toFixed(1)}%, ` +
@@ -341,21 +334,12 @@ Use Google Search to find and analyze this page's content.`;
   async analyzeUrls(urls: string[]): Promise<ContentSimilarityResult> {
     this.logger.log(`Analyzing ${urls.length} URLs for content similarity`);
 
-    // Step 1: Fetch content
     const pages = await this.fetchMultiplePages(urls);
     const failedUrls = pages.filter((p) => p.fetchError).map((p) => p.url);
-
-    // Step 2: Generate embeddings
     const pagesWithEmbeddings = await this.generateEmbeddings(pages);
-
-    // Step 3: Calculate similarity matrix
     const similarityScores =
       this.calculateSimilarityMatrix(pagesWithEmbeddings);
-
-    // Step 4: Classify relationships
     const relationships = this.classifyRelationships(similarityScores);
-
-    // Step 5: Identify clusters
     const clusters = this.identifyIntentClusters(relationships);
 
     return {

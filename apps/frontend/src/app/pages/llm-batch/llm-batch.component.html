@@ -3,7 +3,6 @@
   Compare LLM responses with and without web search across Claude, GPT, and Gemini over time.
 </p>
 
-<!-- Status Card -->
 @if (status(); as s) {
   <div class="card mb-4">
     <div class="card-body">
@@ -68,7 +67,6 @@
   </div>
 }
 
-<!-- Controls -->
 <div class="card mb-4">
   <div class="card-body">
     <div class="row g-2 align-items-end">
@@ -140,7 +138,6 @@
   </div>
 </div>
 
-<!-- Error -->
 @if (error()) {
   <div class="alert alert-danger d-flex align-items-center" role="alert">
     <span class="material-icons me-2">error_outline</span>
@@ -148,7 +145,6 @@
   </div>
 }
 
-<!-- Results Table -->
 @if (loading()) {
   <div class="text-center py-5">
     <div class="spinner-border text-primary"></div>
@@ -216,7 +212,6 @@
     </table>
   </div>
 
-  <!-- Pagination -->
   @if (totalPages() > 1) {
     <nav class="d-flex justify-content-between align-items-center mt-3">
       <small class="text-muted">
@@ -245,7 +240,6 @@
   </div>
 }
 
-<!-- Questions List -->
 <div class="card mt-4">
   <button class="card-header d-flex justify-content-between align-items-center w-100 border-0 bg-transparent"
     style="cursor: pointer" (click)="toggleQuestions()">
@@ -260,7 +254,6 @@
     </span>
   </button>
   @if (showQuestions()) {
-    <!-- Upload Section -->
     <div class="card-body border-bottom">
       <div class="d-flex align-items-center gap-2 flex-wrap">
         <input type="file" accept=".csv" class="form-control form-control-sm"

@@ -3,7 +3,6 @@
   Analyze content similarity across URLs to detect duplicates, intent collisions, and keyword cannibalization.
 </p>
 
-<!-- Input -->
 <div class="card mb-4">
   <div class="card-body">
     <div class="mb-3">
@@ -45,7 +44,6 @@
   </div>
 </div>
 
-<!-- Error -->
 @if (error()) {
   <div class="alert alert-danger d-flex align-items-center" role="alert">
     <span class="material-icons me-2">error_outline</span>
@@ -53,7 +51,6 @@
   </div>
 }
 
-<!-- Loading -->
 @if (loading()) {
   <div class="text-center py-5">
     <p-progressSpinner strokeWidth="4" animationDuration="1s" />
@@ -64,9 +61,7 @@
   </div>
 }
 
-<!-- Results -->
 @if (result(); as res) {
-  <!-- Summary Cards -->
   <div id="simitrack-results" class="row g-3 mb-4">
     <div class="col-6 col-md-4 col-lg">
       <div class="card text-center h-100">
@@ -117,7 +112,6 @@
     </div>
   }
 
-  <!-- Tabs -->
   <ul class="nav nav-tabs mb-3">
     <li class="nav-item">
       <button
@@ -139,7 +133,6 @@
     </li>
   </ul>
 
-  <!-- Relationships Table -->
   @if (activeTab() === 'relationships') {
     @if (relationships().length === 0) {
       <p class="text-muted text-center py-4">No relationships to display.</p>
@@ -189,7 +182,6 @@
     }
   }
 
-  <!-- Intent Clusters -->
   @if (activeTab() === 'clusters') {
     @if (clusters().length === 0) {
       <p class="text-muted text-center py-4">No intent collision clusters detected.</p>
@@ -222,7 +214,6 @@
   }
 }
 
-<!-- Empty state -->
 @if (!loading() && !result() && !error()) {
   <div class="text-muted text-center py-5">
     <span class="material-icons" style="font-size: 3rem;">compare_arrows</span>

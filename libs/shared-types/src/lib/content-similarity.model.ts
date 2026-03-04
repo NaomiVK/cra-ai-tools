@@ -1,4 +1,3 @@
-// Content page with extracted text and embeddings
 export interface ContentPage {
   url: string;
   title: string;
@@ -14,7 +13,6 @@ export interface ContentPage {
   fetchError?: string;
 }
 
-// Similarity scores between two pages
 export interface SimilarityScore {
   url_a: string;
   url_b: string;
@@ -24,7 +22,6 @@ export interface SimilarityScore {
   full_similarity: number;
 }
 
-// Classification types
 export type SimilarityClassification =
   | 'Definite Duplicate'
   | 'Near Duplicate'
@@ -33,7 +30,6 @@ export type SimilarityClassification =
   | 'Template Overlap'
   | 'Unique';
 
-// Analyzed relationship between two pages
 export interface ContentRelationship {
   url_a: string;
   url_b: string;
@@ -49,14 +45,12 @@ export interface ContentRelationship {
   reasoning: string;
 }
 
-// Cluster of URLs with intent collision
 export interface IntentCluster {
   primary_url: string;
   cluster_urls: string[];
   reasoning: string;
 }
 
-// Main result type
 export interface ContentSimilarityResult {
   relationships: ContentRelationship[];
   intent_collision_clusters: IntentCluster[];
@@ -65,12 +59,10 @@ export interface ContentSimilarityResult {
   failed_urls?: string[];
 }
 
-// Request types
 export interface AnalyzeUrlsRequest {
   urls: string[];
 }
 
-// API response wrapper (renamed to avoid clash with generic ApiResponse)
 export interface SimiTrackApiResponse<T> {
   success: boolean;
   data: T;

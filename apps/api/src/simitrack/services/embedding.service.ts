@@ -39,25 +39,6 @@ export class EmbeddingService {
     }
   }
 
-  async getEmbeddings(texts: string[]): Promise<number[][]> {
-    if (!texts || texts.length === 0) {
-      return [];
-    }
-
-    try {
-      const client = this.getClient();
-      const truncatedTexts = texts.map((t) => (t || '').slice(0, 8000));
-      const response = await client.embeddings.create({
-        model: this.model,
-        input: truncatedTexts,
-      });
-      return response.data.map((d) => d.embedding);
-    } catch (error) {
-      this.logger.error(`Batch embedding failed: ${(error as Error).message}`);
-      return texts.map(() => []);
-    }
-  }
-
   cosineSimilarity(a: number[], b: number[]): number {
     if (!a?.length || !b?.length || a.length !== b.length) {
       return 0;

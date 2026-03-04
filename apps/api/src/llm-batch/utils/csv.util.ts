@@ -79,7 +79,7 @@ function splitCsvRecords(content: string): string[] {
         }
         current = '';
       } else if (char === '\r') {
-        // skip carriage returns
+        continue;
       } else {
         current += char;
       }
@@ -170,7 +170,6 @@ export function readCsv(
   const content = fs.readFileSync(filePath, 'utf-8');
   const records = splitCsvRecords(content);
 
-  // Skip header
   const dataRecords = records.slice(1);
   const total = dataRecords.length;
 
@@ -181,7 +180,6 @@ export function readCsv(
     if (row) rows.push(row);
   }
 
-  // Apply filters
   if (query.model) {
     rows = rows.filter((r) => r.model_name === query.model);
   }
@@ -202,12 +200,10 @@ export function readCsv(
 
   const filtered_total = rows.length;
 
-  // Sort by timestamp descending
   rows.sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
 
-  // Pagination
   const offset = query.offset ?? 0;
   const limit = query.limit ?? 50;
   rows = rows.slice(offset, offset + limit);
@@ -224,12 +220,12 @@ export function getCsvRowCount(filePath: string): number {
 }
 
 export function parseQuestionsCsv(content: string): BatchQuestion[] {
-  const lines = content.split('\n').filter((l) => l.trim());
-  if (lines.length < 2) {
+  const records = splitCsvRecords(content);
+  if (records.length < 2) {
     throw new Error('CSV must have a header row and at least 1 data row');
   }
 
-  const header = lines[0].toLowerCase().split(',').map((h) => h.trim());
+  const header = parseCsvLine(records[0]).map((h) => h.toLowerCase().trim());
   const textIdx = header.indexOf('text');
   if (textIdx === -1) {
     throw new Error('CSV must have a "text" column');
@@ -237,8 +233,8 @@ export function parseQuestionsCsv(content: string): BatchQuestion[] {
   const idIdx = header.indexOf('id');
 
   const questions: BatchQuestion[] = [];
-  for (let i = 1; i < lines.length; i++) {
-    const fields = parseCsvLine(lines[i]);
+  for (let i = 1; i < records.length; i++) {
+    const fields = parseCsvLine(records[i]);
     const text = fields[textIdx]?.trim();
     if (!text) continue;
 
