@@ -64,7 +64,7 @@ export interface ParsedPage {
   divCount: number;
   lists: { tag: string; itemCount: number }[];
   tables: { hasHead: boolean; hasBody: boolean; hasScopeHeaders: boolean }[];
-  jsonLd: object[];
+  jsonLd: Record<string, unknown>[];
   microdata: { type: string }[];
   openGraph: Record<string, string>;
   metaTags: Record<string, string>;

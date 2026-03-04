@@ -63,6 +63,7 @@
       "defaultConfiguration": "development"
     },
     "typecheck": {
+      "dependsOn": ["^typecheck"],
       "command": "tsc -p apps/frontend/tsconfig.app.json --noEmit"
     },
     "lint": {

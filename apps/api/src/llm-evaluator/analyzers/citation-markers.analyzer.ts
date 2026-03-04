@@ -28,9 +28,9 @@ export function analyzeCitationMarkers(page: ParsedPage): AnalyzerResult {
   ].filter(Boolean);
 
   // Check JSON-LD for datePublished / dateModified
-  const jsonLdDates = page.jsonLd.some((ld: any) =>
+  const jsonLdDates = page.jsonLd.some((ld) =>
     ld['datePublished'] || ld['dateModified'] ||
-    (Array.isArray(ld['@graph']) && ld['@graph'].some((item: any) => item['datePublished'] || item['dateModified']))
+    (Array.isArray(ld['@graph']) && ld['@graph'].some((item) => item['datePublished'] || item['dateModified']))
   );
 
   if (dateIndicators.length > 0 || jsonLdDates) {
@@ -69,9 +69,9 @@ export function analyzeCitationMarkers(page: ParsedPage): AnalyzerResult {
   // --- Author attribution (20%) ---
   let authorScore = 0;
   const hasAuthorMeta = !!page.metaTags['author'];
-  const hasAuthorSchema = page.jsonLd.some((ld: any) =>
+  const hasAuthorSchema = page.jsonLd.some((ld) =>
     ld['author'] ||
-    (Array.isArray(ld['@graph']) && ld['@graph'].some((item: any) => item['author']))
+    (Array.isArray(ld['@graph']) && ld['@graph'].some((item) => item['author']))
   );
 
   if (hasAuthorMeta && hasAuthorSchema) {

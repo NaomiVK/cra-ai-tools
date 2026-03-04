@@ -62,7 +62,7 @@ export function parseHTML(html: string, baseUrl?: string): ParsedPage {
   });
 
   // JSON-LD
-  const jsonLd: object[] = [];
+  const jsonLd: Record<string, unknown>[] = [];
   $('script[type="application/ld+json"]').each((_, el) => {
     try {
       const parsed = JSON.parse($(el).html() || '');

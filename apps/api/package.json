@@ -56,6 +56,9 @@
         ],
         "executor": "nx:noop"
       },
+      "lint": {
+        "executor": "@nx/eslint:lint"
+      },
       "serve": {
         "continuous": true,
         "executor": "@nx/js:node",

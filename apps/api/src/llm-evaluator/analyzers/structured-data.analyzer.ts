@@ -23,7 +23,7 @@ export function analyzeStructuredData(page: ParsedPage): AnalyzerResult {
 
     // Check for common types
     const types = page.jsonLd
-      .map((ld: any) => ld['@type'])
+      .map((ld) => ld['@type'])
       .filter(Boolean)
       .flat();
     if (types.length > 0) {
@@ -83,9 +83,9 @@ export function analyzeStructuredData(page: ParsedPage): AnalyzerResult {
 
   // --- Breadcrumb markup (15%) ---
   let breadcrumbScore = 0;
-  const hasBreadcrumbSchema = page.jsonLd.some((ld: any) =>
+  const hasBreadcrumbSchema = page.jsonLd.some((ld) =>
     ld['@type'] === 'BreadcrumbList' ||
-    (Array.isArray(ld['@graph']) && ld['@graph'].some((item: any) => item['@type'] === 'BreadcrumbList'))
+    (Array.isArray(ld['@graph']) && ld['@graph'].some((item) => item['@type'] === 'BreadcrumbList'))
   );
   const hasBreadcrumbMicrodata = page.microdata.some(m =>
     m.type.includes('BreadcrumbList')
@@ -116,9 +116,9 @@ export function analyzeStructuredData(page: ParsedPage): AnalyzerResult {
   const hasArticleDate = !!page.metaTags['article:published_time'] || !!page.openGraph['article:published_time'];
   const hasDescription = !!page.metaTags['description'];
 
-  const hasAuthorSchema = page.jsonLd.some((ld: any) =>
+  const hasAuthorSchema = page.jsonLd.some((ld) =>
     ld['author'] || ld['creator'] ||
-    (Array.isArray(ld['@graph']) && ld['@graph'].some((item: any) => item['author']))
+    (Array.isArray(ld['@graph']) && ld['@graph'].some((item) => item['author']))
   );
 
   if (hasAuthorMeta || hasAuthorSchema) {
