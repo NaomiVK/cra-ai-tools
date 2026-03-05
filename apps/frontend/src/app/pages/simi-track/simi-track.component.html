@@ -17,7 +17,7 @@
         [disabled]="loading()"
       ></textarea>
       <small class="form-text text-muted">
-        Enter 2–50 public URLs. Content is extracted via Gemini and compared using OpenAI embeddings.
+        Enter 2–50 public URLs. Content is fetched directly and compared using OpenAI embeddings.
       </small>
     </div>
     <div class="d-flex gap-2">
@@ -55,8 +55,8 @@
   <div class="text-center py-5">
     <p-progressSpinner strokeWidth="4" animationDuration="1s" />
     <p class="text-muted mt-3">
-      Fetching page content via Gemini, generating embeddings, and calculating similarity...
-      This may take 30–90 seconds depending on the number of URLs.
+      Fetching page content, generating embeddings, and calculating similarity...
+      This may take 15–60 seconds depending on the number of URLs.
     </p>
   </div>
 }
@@ -143,9 +143,9 @@
             <tr>
               <th>URL A</th>
               <th>URL B</th>
-              <th>Classification</th>
-              <th>Confidence</th>
-              <th>Similarity Scores</th>
+              <th title="How the relationship between two pages is categorized (e.g. Duplicate, Near Duplicate, Intent Collision, Cannibalization, Template Overlap, or Unique)">Classification</th>
+              <th title="Derived from the similarity scores that triggered the classification. For duplicates: avg of body + title. For intent collision: title score. For unique: how different the pages are.">Confidence</th>
+              <th title="Cosine similarity (0–100%) of OpenAI text embeddings for each content section. Measures how semantically similar two pieces of text are — higher means more alike. T = Title, I = Intro (first 3 paragraphs), B = Body (main content), F = Full page (all sections combined).">Similarity Scores</th>
               <th>Action</th>
             </tr>
           </thead>

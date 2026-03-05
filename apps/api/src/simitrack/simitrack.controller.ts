@@ -63,17 +63,15 @@ export class SimiTrackController {
 
   @Get('status')
   getStatus(): SimiTrackApiResponse<{ ready: boolean; message: string }> {
-    const hasGemini = !!this.configService.get<string>('GEMINI_API_KEY');
     const hasOpenAI = !!this.configService.get<string>('OPENAI_API_KEY');
-    const ready = hasGemini && hasOpenAI;
 
     return {
       success: true,
       data: {
-        ready,
-        message: ready
+        ready: hasOpenAI,
+        message: hasOpenAI
           ? 'SimiTrack content similarity service is ready'
-          : `Missing API keys: ${[!hasGemini && 'GEMINI_API_KEY', !hasOpenAI && 'OPENAI_API_KEY'].filter(Boolean).join(', ')}`,
+          : 'Missing API key: OPENAI_API_KEY',
       },
     };
   }

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { GoogleGenAI } from '@google/genai';
+import { execFile } from 'child_process';
+import * as cheerio from 'cheerio';
 import { EmbeddingService } from './embedding.service';
 import type {
   ContentPage,
@@ -11,74 +11,71 @@ import type {
   SimilarityClassification,
 } from '@cra-ai-tools/shared-types';
 
-// Lowered thresholds to account for Gemini paraphrasing before embedding.
-// Original thresholds were calibrated for raw text, but Gemini extraction
-// transforms content (summarizes/paraphrases), reducing cosine similarity
-// by ~10-20% compared to direct text comparison.
+// Thresholds calibrated for direct text extraction via HTTP fetch + Cheerio.
 const THRESHOLDS = {
-  definiteDuplicate: { body: 0.78, title: 0.75 },
-  nearDuplicate: { body: 0.70, intro: 0.65 },
-  intentCollision: { title: 0.70, bodyMax: 0.60 },
-  potentialCannibalization: { title: 0.60, bodyMin: 0.45, bodyMax: 0.65 },
-  templateOverlap: { full: 0.75, bodyMax: 0.55 },
+  definiteDuplicate: { body: 0.88, title: 0.85 },
+  nearDuplicate: { body: 0.80, intro: 0.75 },
+  intentCollision: { title: 0.80, bodyMax: 0.70 },
+  potentialCannibalization: { title: 0.70, bodyMin: 0.55, bodyMax: 0.75 },
+  templateOverlap: { full: 0.85, bodyMax: 0.65 },
 };
 
 @Injectable()
 export class ContentSimilarityService {
   private readonly logger = new Logger(ContentSimilarityService.name);
-  private geminiClient: GoogleGenAI | null = null;
 
-  constructor(
-    private readonly embeddingService: EmbeddingService,
-    private readonly configService: ConfigService
-  ) {}
+  constructor(private readonly embeddingService: EmbeddingService) {}
 
-  private getGeminiClient(): GoogleGenAI {
-    if (!this.geminiClient) {
-      const apiKey = this.configService.get<string>('GEMINI_API_KEY');
-      if (!apiKey) {
-        throw new Error('GEMINI_API_KEY is not configured');
-      }
-      this.geminiClient = new GoogleGenAI({ apiKey });
-    }
-    return this.geminiClient;
+  private extractMainContent($: cheerio.CheerioAPI) {
+    const main = $('main, article, [role="main"]').first();
+    if (main.length) return main;
+
+    const body = $('body').clone();
+    body.find('nav, header, footer, aside, [role="navigation"], [role="banner"], [role="contentinfo"]').remove();
+    return body;
+  }
+
+  private fetchHtml(url: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      execFile(
+        'curl',
+        ['-s', '-L', '-m', '15', '-f', url],
+        { maxBuffer: 10 * 1024 * 1024 },
+        (error, stdout) => {
+          if (error) {
+            reject(new Error(`Failed to fetch ${url}: ${error.message}`));
+            return;
+          }
+          if (!stdout || stdout.length === 0) {
+            reject(new Error(`Empty response from ${url}`));
+            return;
+          }
+          resolve(stdout);
+        },
+      );
+    });
   }
 
   async fetchPageContent(url: string): Promise<ContentPage> {
-    const client = this.getGeminiClient();
-
-    const prompt = `Extract the following from this URL: ${url}
-
-Return ONLY a JSON object (no markdown fencing, no extra text) with these fields:
-- title: The page's <title> tag content
-- h1: The main H1 heading
-- intro_text: First 2-3 paragraphs or introduction section (max 500 words)
-- body_text: Main content body (max 2000 words)
-
-Use Google Search to find and analyze this page's content.`;
-
     try {
-      const response = await client.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          tools: [{ googleSearch: {} }],
-        },
-      });
+      const html = await this.fetchHtml(url);
+      const $ = cheerio.load(html);
 
-      const raw = (response.text || '').trim();
-      const cleaned = raw
-        .replace(/^```(?:json)?\s*/i, '')
-        .replace(/\s*```\s*$/, '')
-        .trim();
-      const parsed = JSON.parse(cleaned || '{}');
-      return {
-        url,
-        title: parsed.title || '',
-        h1: parsed.h1 || '',
-        intro_text: parsed.intro_text || '',
-        body_text: parsed.body_text || '',
-      };
+      // Remove script/style tags globally
+      $('script, style, noscript').remove();
+
+      const title = $('title').first().text().trim();
+      const h1 = $('h1').first().text().trim();
+
+      const content = this.extractMainContent($);
+      const paragraphs = content.find('p').toArray().map((el) => $(el).text().trim()).filter(Boolean);
+
+      const introText = paragraphs.slice(0, 3).join(' ');
+
+      const bodyWords = paragraphs.join(' ').split(/\s+/);
+      const bodyText = bodyWords.slice(0, 2000).join(' ');
+
+      return { url, title, h1, intro_text: introText, body_text: bodyText };
     } catch (error) {
       this.logger.error(`Failed to fetch ${url}: ${(error as Error).message}`);
       return {
