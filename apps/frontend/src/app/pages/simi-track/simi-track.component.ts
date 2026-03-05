@@ -8,6 +8,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ProgressSpinner } from 'primeng/progressspinner';
 import { Tag } from 'primeng/tag';
+import { Tooltip } from 'primeng/tooltip';
 import { SimiTrackService } from '../../services/simitrack.service';
 import type {
   ContentSimilarityResult,
@@ -17,7 +18,7 @@ import type {
 @Component({
   selector: 'app-simi-track',
   standalone: true,
-  imports: [FormsModule, ProgressSpinner, Tag],
+  imports: [FormsModule, ProgressSpinner, Tag, Tooltip],
   templateUrl: './simi-track.component.html',
   styleUrl: './simi-track.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

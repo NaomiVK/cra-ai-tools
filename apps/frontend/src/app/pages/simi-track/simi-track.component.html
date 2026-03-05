@@ -143,9 +143,24 @@
             <tr>
               <th>URL A</th>
               <th>URL B</th>
-              <th title="How the relationship between two pages is categorized (e.g. Duplicate, Near Duplicate, Intent Collision, Cannibalization, Template Overlap, or Unique)">Classification</th>
-              <th title="Derived from the similarity scores that triggered the classification. For duplicates: avg of body + title. For intent collision: title score. For unique: how different the pages are.">Confidence</th>
-              <th title="Cosine similarity (0–100%) of OpenAI text embeddings for each content section. Measures how semantically similar two pieces of text are — higher means more alike. T = Title, I = Intro (first 3 paragraphs), B = Body (main content), F = Full page (all sections combined).">Similarity Scores</th>
+              <th
+                pTooltip="<strong>Classification</strong><hr class='my-1'/>How the page pair is categorized:<br/>• <em>Definite Duplicate</em> — nearly identical content<br/>• <em>Near Duplicate</em> — very similar, minor differences<br/>• <em>Intent Collision</em> — similar titles, different content<br/>• <em>Potential Cannibalization</em> — competing for same keywords<br/>• <em>Template Overlap</em> — shared boilerplate, unique body<br/>• <em>Unique</em> — sufficiently different"
+                [escape]="false"
+                tooltipPosition="bottom"
+                tooltipStyleClass="chart-tooltip"
+              >Classification</th>
+              <th
+                pTooltip="<strong>Confidence</strong><hr class='my-1'/>Derived from the similarity scores<br/>that triggered the classification.<br/><br/>• <em>Duplicates:</em> avg of body + title<br/>• <em>Intent Collision:</em> title score<br/>• <em>Cannibalization:</em> avg of title + body<br/>• <em>Template Overlap:</em> full-page score<br/>• <em>Unique:</em> inverse of full-page score"
+                [escape]="false"
+                tooltipPosition="bottom"
+                tooltipStyleClass="chart-tooltip"
+              >Confidence</th>
+              <th
+                pTooltip="<strong>Similarity Scores</strong><hr class='my-1'/>Cosine similarity (0–100%) of OpenAI<br/>text embeddings. Higher = more alike.<br/><br/>• <strong>T</strong> — Title<br/>• <strong>I</strong> — Intro (first 3 paragraphs)<br/>• <strong>B</strong> — Body (main content)<br/>• <strong>F</strong> — Full page (all sections combined)"
+                [escape]="false"
+                tooltipPosition="bottom"
+                tooltipStyleClass="chart-tooltip"
+              >Similarity Scores</th>
               <th>Action</th>
             </tr>
           </thead>

@@ -198,6 +198,21 @@ summary {
   color: #2e5ea7;
 }
 
+/* PrimeNG tooltip (match UPD chart-tooltip style) */
+.chart-tooltip .p-tooltip-text {
+  background-color: #fff;
+  color: #373d3f;
+  border: 1px solid #e3e3e3;
+  text-align: left;
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 0.75rem;
+  max-width: 280px;
+}
+
+.chart-tooltip .p-tooltip-arrow {
+  border-top-color: #e3e3e3;
+}
+
 /* PrimeNG overrides (match UPD) */
 .p-datatable-thead {
   background-color: #f5f5f5;
